@@ -1,2 +1,5 @@
 .env
 news_data.csv
+final_sentiment_data.csv
+scaler.pkl
+lstm_model.h5

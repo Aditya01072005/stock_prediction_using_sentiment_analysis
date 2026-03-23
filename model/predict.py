@@ -1,43 +1,43 @@
 import pandas as pd
 import numpy as np
 import joblib
+
 from tensorflow.keras.models import load_model
 
-model = load_model("model/stock_lstm_model.h5")
+print("Running prediction...\n")
+
+# Load model & scaler
+model = load_model("model/lstm_model.h5", compile=False)
 scaler = joblib.load("model/scaler.pkl")
 
-df = pd.read_csv("data/processed_stock_data.csv")
+# Load latest data
+df = pd.read_csv("data/final_merged_data.csv")
 
-cols = list(df.columns)
-if 'Target' in cols:
-    cols.remove('Target')
-    cols.append('Target')
-    df = df[cols]
+# Select features
+features = ["Close", "RSI", "MACD", "Avg_Sentiment"]
+df = df[features]
 
+# Drop NaN
+df.dropna(inplace=True)
 
-df = df.drop(columns=['Date', 'Stock'])
-
-
+# Scale data
 scaled_data = scaler.transform(df)
 
+# Take last sequence
+sequence_length = 10
+last_sequence = scaled_data[-sequence_length:]
 
-SEQ_LENGTH = 60
+# Reshape for model
+X_input = np.array([last_sequence])
 
-last_sequence = scaled_data[-SEQ_LENGTH:]
+# Predict
+predicted_scaled = model.predict(X_input)
 
-x_test = []
-x_test.append(last_sequence)
-
-x_test = np.array(x_test)
-
-
-prediction = model.predict(x_test)
-
-
-
+# Convert back to original scale
+# Trick: create dummy array
 dummy = np.zeros((1, scaled_data.shape[1]))
-dummy[0,-1] = prediction[0][0]
+dummy[0][0] = predicted_scaled[0][0]  # Close is first column
 
-predicted_price = scaler.inverse_transform(dummy)[0,-1]
+predicted_price = scaler.inverse_transform(dummy)[0][0]
 
-print("Predicted Next Value: ", predicted_price)
+print("Predicted Next Day Close Price:", predicted_price)

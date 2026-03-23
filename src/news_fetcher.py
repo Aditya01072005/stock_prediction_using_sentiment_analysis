@@ -17,7 +17,7 @@ def fetch_news(query="AAPL"):
         q = query,
         language='en',
         sort_by='publishedAt',
-        page_size=20
+        page_size=40
     )
     
     data = []
